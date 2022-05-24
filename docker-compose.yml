@@ -1,0 +1,62 @@
+version: "3.7"
+
+services:
+    python:
+        image: python:3.10.4-bullseye
+        restart: always
+        stdin_open: true
+        tty: true
+        working_dir: /data/project
+        user: "${U_ID}:${G_ID}"
+        networks:
+            - app-net
+        ports:
+            - 40080:80
+            - 40443:443
+            - 40444:444
+        volumes:
+            - .:/data/project
+        depends_on:
+            - redis
+            - mysql
+
+    redis:
+        image: redis:latest
+        restart: always
+        networks:
+            - app-net
+        expose:
+            - 6379
+
+    mysql:
+        image: mysql:8.0.27
+        restart: always
+        networks:
+            - app-net
+        expose:
+            - 3306
+        volumes:
+            - mysql-data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: password
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:5.1.1 
+        restart: always 
+        networks:
+            - app-net      
+        ports:
+            - 8080:80
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            UPLOAD_LIMIT: 50000M
+        depends_on:
+            - mysql
+
+volumes:
+    mysql-data: {}
+
+networks:
+    app-net: 
+        driver: bridge
